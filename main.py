@@ -2,36 +2,59 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from collections import deque
 
+
 graph = {
-    0: [1, 2, 3, 4, 5],
-    1: [6, 7, 8],
-    2: [9],
-    3: [10],
-    4: [11],
-    5: [],
-    6: [],
-    7: [12],
-    8: [],
-    9: [13],
-    10: [14],
-    11: [15],
-    12: [],
-    13: [],
-    14: [],
-    15: [],
+    1: [2, 4, 5],
+    2: [1, 3, 6, 7],
+    3: [2],
+    4: [1, 7],
+    5: [1],
+    6: [2],
+    7: [2, 4],
 }
 
-
-reference = {
-    0: [1, 2, 3],
-    1: [4, 5],
-    2: [6],
-    3: [7],
-    4: [],
-    5: [],
-    6: [],
-    7: [],
+graph_17nodes_root0 = {
+    0: [1, 2, 4, 7, 14],
+    1: [0, 2, 4, 5],
+    2: [0, 1, 6],
+    3: [6, 17],
+    4: [0, 1, 5],
+    5: [1, 4, 8, 9],
+    6: [2, 3, 9, 10],
+    7: [0, 8, 14],
+    8: [5, 7, 11],
+    9: [5, 6, 12, 13],
+    10: [6, 13, 17],
+    11: [8, 12, 14, 15],
+    12: [9, 11, 15, 16],
+    13: [9, 10, 17],
+    14: [0, 7, 11, 15],
+    15: [11, 12, 14, 16],
+    16: [12, 15],
+    17: [3, 10, 13],
 }
+
+graph_17nodes_root8 = {
+    0: [4, 14],
+    1: [2, 5],
+    2: [1, 5],
+    3: [6],
+    4: [0, 7, 8],
+    5: [1, 2, 9],
+    6: [3, 9, 10],
+    7: [4, 8, 11],
+    8: [4, 7, 9, 12],
+    9: [5, 6, 8, 12, 13],
+    10: [6, 13],
+    11: [7],
+    12: [8, 9, 16],
+    13: [9, 10, 16, 17],
+    14: [0],
+    15: [16],
+    16: [12, 13, 15, 17],
+    17: [13, 16]
+}
+
 
 # plt.show()
 
@@ -82,13 +105,13 @@ def generate_graph(graph, root, image_name): # root is the node that starts the 
         for neighbor in graph[node]:
             G.add_edge(node, neighbor)
 
-    pos = tree_layout(G, root)
+    #pos = tree_layout(G, root)
 
     node_colors = ['green' if node == root else 'black' for node in G.nodes()]
 
     nx.draw(
         G,
-        pos,
+        #pos,
         with_labels=True,
         node_color=node_colors,
         node_size=800,
@@ -101,6 +124,15 @@ def generate_graph(graph, root, image_name): # root is the node that starts the 
     plt.savefig(f'images/{image_name}.png')
     plt.clf() # for the image not to be overlap by the last one, when calling the function more then one time
 
+def get_child_not_visited(graph, node, visited):
+
+    if node not in graph:
+        return None
+    
+    for neighbor in graph[node]:
+        if neighbor not in visited:
+            return neighbor
+    return None
 
 def bfs(graph, root):
     visited = set()
@@ -125,67 +157,59 @@ def bfs(graph, root):
 
 def dfs(graph, root):
     visited = set()
-    stack = [] # no need to use deque, since list already takes O(1) time to append and pop the element in last position
-
+    tree = {root: []} # tree = {node: [neighbor1, neighbor2]}
+    stack = [root] # stack = [(node, parent)]
+                   # no need to use deque, since list already takes O(1) time to append and pop the element in last position
+                           
     visited.add(root)
-    stack.append(root)
 
-    print('DFS:')
+    # i = 0
 
     while stack:
-        node = stack.pop()
-        print(node, end=' ')
 
-        for neighbor in reversed(graph[node]): # LIFO
-            if neighbor not in visited:
-                visited.add(neighbor)
-                stack.append(neighbor)
-    
-    print('\n\n')
+        node = stack[-1] # get the last element in the stack without removing it
 
-generate_graph(graph, 0, 'graph')
-# bfs(graph, 0)
-# dfs(graph, 0)
+        print(f"Current node: {node}")
+        print(f"Stack: {stack}\n")
 
-generate_graph(reference, 0, 'reference')
-bfs(reference, 0)
-dfs(reference, 0)
+        # check next child of the last node in the stack
+        child_not_visited = get_child_not_visited(graph, node, visited)
+
+        if child_not_visited is not None:
+            visited.add(child_not_visited)
+
+            # assure that the child is in the tree
+            if child_not_visited not in tree:
+                tree[child_not_visited] = []
+            
+            # add the child to the tree as a child of the last node in the stack
+            tree[node].append(child_not_visited) 
+
+            stack.append(child_not_visited)
+
+            # image_name = f'dfs_tree_{node}_{i}'
+            # generate_graph(tree, root, image_name)
+            # i += 1
+        else:
+            stack.pop() # remove the last element in the stack
+
+    return tree
+
+print('GRAPH:')
+generate_graph(graph, 1, 'graph')
+dfs_tree = dfs(graph, 1)
+generate_graph(dfs_tree, 1, 'dfs_tree')
+print(f'\n{"-"*20}\n')
+
+print('GRAPH 17 NODES ROOT 0:')
+generate_graph(graph_17nodes_root0, 0, 'graph_17nodes_root0')
+dfs_tree_17nodes_root0 = dfs(graph_17nodes_root0, 0)
+generate_graph(dfs_tree_17nodes_root0, 0, 'dfs_tree_17nodes_root0')
+print(f'\n{"-"*20}\n')
+
+print('GRAPH 17 NODES ROOT 8:')
+generate_graph(graph_17nodes_root8, 8, 'graph_17nodes_root8')
+dfs_tree_17nodes_root8 = dfs(graph_17nodes_root8, 8)
+generate_graph(dfs_tree_17nodes_root8, 8, 'dfs_tree_17nodes_root8')
 
 plt.close()
-
-# ----- graph without layout -----
-# G = nx.Graph()
-# G.add_node('0')
-# G.add_node('1')
-# G.add_node('2')
-# G.add_node('3')
-# G.add_node('4')
-# G.add_node('5')
-# G.add_node('6')
-# G.add_node('7')
-# G.add_node('8')
-# G.add_node('10')
-# G.add_node('11')
-# G.add_edge('0','1')
-# G.add_edge('0','2')
-# G.add_edge('0','3')
-# G.add_edge('0','8')
-# G.add_edge('0','10')
-# G.add_edge('1','4')
-# G.add_edge('1','5')
-# G.add_edge('2','6')
-# G.add_edge('3','7')
-# G.add_edge('4','11')
-
-# nx.draw(
-#     G,
-#     with_labels=True,
-#     node_color='black',
-#     node_size=2000,
-#     font_color='white',
-#     font_weight='bold', 
-#     width=3
-# )
-
-# plt.margins(0.2)
-# plt.savefig('images/grafico.png')
