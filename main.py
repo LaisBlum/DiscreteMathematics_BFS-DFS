@@ -13,7 +13,7 @@ graph = {
     7: [2, 4],
 }
 
-graph_17nodes_root0 = {
+dfs_graph_17nodes_root0 = {
     0: [1, 2, 4, 7, 14],
     1: [0, 2, 4, 5],
     2: [0, 1, 6],
@@ -34,7 +34,7 @@ graph_17nodes_root0 = {
     17: [3, 10, 13],
 }
 
-graph_17nodes_root8 = {
+dfs_graph_17nodes_root8 = {
     0: [4, 14],
     1: [2, 5],
     2: [1, 5],
@@ -53,6 +53,49 @@ graph_17nodes_root8 = {
     15: [16],
     16: [12, 13, 15, 17],
     17: [13, 16]
+}
+
+bfs_graph_17nodes_root0 = {
+    0: [1, 4, 7, 14],
+    1: [0, 5],
+    2: [3, 5, 6],
+    3: [2, 6, 10],
+    4: [0],
+    5: [1, 2, 8, 9],
+    6: [2, 3, 9, 10],
+    7: [0, 8, 11, 14],
+    8: [5, 7, 9],
+    9: [5, 6, 8, 13],
+    10: [3, 6],
+    11: [7, 12, 15],
+    12: [11, 13, 15, 16],
+    13: [9, 12, 16],
+    14: [0, 7],
+    15: [11, 12, 16, 17],
+    16: [12, 13, 15, 17],
+    17: [15, 16],
+}
+
+# generate forest
+bfs_graph_17nodes_root8 = {
+    0: [2],
+    1: [0, 2, 5, 4],
+    2: [0, 1, 3, 5, 6],
+    3: [2, 6, 10],
+    4: [1, 5, 7, 8],
+    5: [1, 2, 4, 6, 8, 9],
+    6: [2, 3, 5, 10],
+    7: [4, 8],
+    8: [4, 5, 7, 9],
+    9: [5, 8, 10, 13],
+    10: [3, 6, 9, 13],
+    11: [14],
+    12: [13, 16],
+    13: [9, 10, 12, 16],
+    14: [11],
+    15: [17],
+    16: [12, 13, 17],
+    17: [15, 16],
 }
 
 
@@ -124,7 +167,7 @@ def generate_graph(graph, root, image_name): # root is the node that starts the 
     plt.savefig(f'images/{image_name}.png')
     plt.clf() # for the image not to be overlap by the last one, when calling the function more then one time
 
-def get_child_not_visited(graph, node, visited):
+def get_neighbor_not_visited(graph, node, visited):
 
     if node not in graph:
         return None
@@ -136,30 +179,54 @@ def get_child_not_visited(graph, node, visited):
 
 def bfs(graph, root):
     visited = set()
-    queue = deque() # deque() to implement FIFO, because set is without order
-                    # deque also takes O(1) time to remove first element while the list takes O(n)
+    tree = {root: []} # tree = {node: [neighbor1, neighbor2]}
+    queue = deque() # deque implements a FIFO queue efficiently
+                    # popleft() takes O(1) time, while removing the first
+                    # element from a list takes O(n)
 
     visited.add(root)
     queue.append(root)
 
-    print('BFS:')
-
     while queue:
         node = queue.popleft() # remove the first element in the queue
-        print(node, end=' ')
 
+        print(f"Current node: {node}")
+        print(f"Queue: {list(queue)}\n")
+        
         for neighbor in graph[node]:
             if neighbor not in visited:
                 visited.add(neighbor)
+
+                # assure that the neighbor is in the tree
+                if neighbor not in tree:
+                    tree[neighbor] = []
+                
+                # add the neighbor to the tree as a child of the current node
+                tree[node].append(neighbor) 
+
                 queue.append(neighbor)
+
+    return tree
+
+# generate forest with the roots being the first node of the graph that is not visited yet
+def bfs_forest(graph, root):
+    visited = set()
+    forest = {} # forest = {node_tree1: [neighbor1, neighbor2], node_tree1: [neighbor3] node_tree2: [neighbor4, neighbor5]}
+
+    for node in graph:
+        if node not in visited:
+            tree = bfs(graph, node)
+            for node_tree in tree:
+                forest[node_tree] = tree[node_tree]
+            visited.update(tree.keys()) # add all nodes of the tree to the visited set
+        
+    return forest
     
-    print('\n\n')
 
 def dfs(graph, root):
     visited = set()
     tree = {root: []} # tree = {node: [neighbor1, neighbor2]}
-    stack = [root] # stack = [(node, parent)]
-                   # no need to use deque, since list already takes O(1) time to append and pop the element in last position
+    stack = [root] # no need to use deque, since list append() and pop() from the end are already O(1)
                            
     visited.add(root)
 
@@ -172,20 +239,20 @@ def dfs(graph, root):
         print(f"Current node: {node}")
         print(f"Stack: {stack}\n")
 
-        # check next child of the last node in the stack
-        child_not_visited = get_child_not_visited(graph, node, visited)
+        # check next neighbor of the last node in the stack
+        neighbor_not_visited = get_neighbor_not_visited(graph, node, visited)
 
-        if child_not_visited is not None:
-            visited.add(child_not_visited)
+        if neighbor_not_visited is not None:
+            visited.add(neighbor_not_visited)
 
-            # assure that the child is in the tree
-            if child_not_visited not in tree:
-                tree[child_not_visited] = []
+            # assure that the neighbor is in the tree
+            if neighbor_not_visited not in tree:
+                tree[neighbor_not_visited] = []
             
-            # add the child to the tree as a child of the last node in the stack
-            tree[node].append(child_not_visited) 
+            # add the neighbor to the tree as a child of the last node in the stack
+            tree[node].append(neighbor_not_visited) 
 
-            stack.append(child_not_visited)
+            stack.append(neighbor_not_visited)
 
             # image_name = f'dfs_tree_{node}_{i}'
             # generate_graph(tree, root, image_name)
@@ -198,18 +265,33 @@ def dfs(graph, root):
 print('GRAPH:')
 generate_graph(graph, 1, 'graph')
 dfs_tree = dfs(graph, 1)
-generate_graph(dfs_tree, 1, 'dfs_tree')
+generate_graph(dfs_tree, 1, 'dfs_tree_graph')
 print(f'\n{"-"*20}\n')
 
-print('GRAPH 17 NODES ROOT 0:')
-generate_graph(graph_17nodes_root0, 0, 'graph_17nodes_root0')
-dfs_tree_17nodes_root0 = dfs(graph_17nodes_root0, 0)
+print('DFS - GRAPH 17 NODES ROOT 0:')
+generate_graph(dfs_graph_17nodes_root0, 0, 'dfs_graph_17nodes_root0')
+dfs_tree_17nodes_root0 = dfs(dfs_graph_17nodes_root0, 0)
 generate_graph(dfs_tree_17nodes_root0, 0, 'dfs_tree_17nodes_root0')
 print(f'\n{"-"*20}\n')
 
-print('GRAPH 17 NODES ROOT 8:')
-generate_graph(graph_17nodes_root8, 8, 'graph_17nodes_root8')
-dfs_tree_17nodes_root8 = dfs(graph_17nodes_root8, 8)
+print('DFS - GRAPH 17 NODES ROOT 8:')
+generate_graph(dfs_graph_17nodes_root8, 8, 'dfs_graph_17nodes_root8')
+dfs_tree_17nodes_root8 = dfs(dfs_graph_17nodes_root8, 8)
 generate_graph(dfs_tree_17nodes_root8, 8, 'dfs_tree_17nodes_root8')
+print(f'\n{"-"*20}\n')
+
+print('BFS - GRAPH 17 NODES ROOT 0:')
+generate_graph(bfs_graph_17nodes_root0, 0, 'bfs_graph_17nodes_root0')
+bfs_tree_17nodes_root0 = bfs(bfs_graph_17nodes_root0, 0)
+generate_graph(bfs_tree_17nodes_root0, 0, 'bfs_tree_17nodes_root0')
+print(f'\n{"-"*20}\n')
+
+# generate forest
+print('BFS - GRAPH 17 NODES ROOT 8:')
+generate_graph(bfs_graph_17nodes_root8, 8, 'bfs_graph_17nodes_root8')
+bfs_tree_17nodes_root8 = bfs(bfs_graph_17nodes_root8, 8)
+generate_graph(bfs_tree_17nodes_root8, 8, 'bfs_tree_17nodes_root8')
+bfs_forest_17nodes_root8 = bfs_forest(bfs_graph_17nodes_root8, 8)
+generate_graph(bfs_forest_17nodes_root8, 8, 'bfs_forest_17nodes_root8')
 
 plt.close()
