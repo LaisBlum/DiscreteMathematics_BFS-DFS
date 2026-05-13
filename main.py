@@ -6,7 +6,7 @@ graph_root8 = {
     0: [4, 14],
     1: [2, 5],
     2: [1, 5],
-    3: [6, 3],
+    3: [6],
     4: [0, 7, 8],
     5: [1, 2, 9],
     6: [3, 9, 10],
@@ -23,24 +23,22 @@ graph_root8 = {
 
 # generate forest
 graph_forest = {
-    8: [4, 5, 7, 9],
     0: [2],
-    1: [0, 2, 5, 4],
-    2: [0, 1, 3, 5, 6],
-    3: [2, 6, 10],
+    1: [2, 4],
+    2: [0, 1, 3, 5, 10],
+    3: [2],
     4: [1, 5, 7, 8],
-    5: [1, 2, 4, 6, 8, 9],
-    6: [2, 3, 5, 10],
+    5: [2, 4, 6, 9],
+    6: [5],
     7: [4, 8],
-    9: [5, 8, 10, 13],
-    10: [3, 6, 9, 13],
-    11: [14, 15, 17],
-    12: [13, 16],
-    13: [9, 10, 12, 16],
-    14: [11, 15],
-    15: [11, 14],
-    16: [12, 13],
-    17: [11],
+    8: [4, 7],
+    9: [5, 10, 12],
+    10: [2, 9],
+    11: [13, 14, 15],
+    12: [9],
+    13: [11, 14],
+    14: [11, 13],
+    15: [11],
 }
 
 petersen_graph = {
@@ -56,48 +54,6 @@ petersen_graph = {
     'D1': ['A1', 'B1', 'D'],
     'E1': ['B1', 'C1', 'E']
 }
-
-# dfs_graph_17nodes_root0 = {
-#     0: [1, 2, 4, 7, 14],
-#     1: [0, 2, 4, 5],
-#     2: [0, 1, 6],
-#     3: [6, 17],
-#     4: [0, 1, 5],
-#     5: [1, 4, 8, 9],
-#     6: [2, 3, 9, 10],
-#     7: [0, 8, 14],
-#     8: [5, 7, 11],
-#     9: [5, 6, 12, 13],
-#     10: [6, 13, 17],
-#     11: [8, 12, 14, 15],
-#     12: [9, 11, 15, 16],
-#     13: [9, 10, 17],
-#     14: [0, 7, 11, 15],
-#     15: [11, 12, 14, 16],
-#     16: [12, 15],
-#     17: [3, 10, 13],
-# }
-
-# bfs_graph_17nodes_root0 = {
-#     0: [1, 4, 7, 14],
-#     1: [0, 5],
-#     2: [3, 5, 6],
-#     3: [2, 6, 10],
-#     4: [0],
-#     5: [1, 2, 8, 9],
-#     6: [2, 3, 9, 10],
-#     7: [0, 8, 11, 14],
-#     8: [5, 7, 9],
-#     9: [5, 6, 8, 13],
-#     10: [3, 6],
-#     11: [7, 12, 15],
-#     12: [11, 13, 15, 16],
-#     13: [9, 12, 16],
-#     14: [0, 7],
-#     15: [11, 12, 16, 17],
-#     16: [12, 13, 15, 17],
-#     17: [15, 16],
-# }
 
 
 # ----- Layouts -----
@@ -179,7 +135,8 @@ def get_layout(G, layout_type='spring', roots=None):
 
     # default
     if layout_type is None or layout_type == 'spring':
-        return nx.spring_layout(G, seed=42)
+        # k: distance between nodes; iterations: number of times the algorithm runs to adjust positions; seed: for reproducibility
+        return nx.spring_layout(G, k=0.5, iterations=50, seed=42)
 
     # tree
     elif layout_type == 'tree':
@@ -320,45 +277,49 @@ def dfs(graph, root):
     return tree
 
 def spanning_forest(graph, algorithm, roots=None):
-
     visited = set()
     forest = {} # forest = {node_tree1: [neighbor1, neighbor2], node_tree1: [neighbor3] node_tree2: [neighbor4, neighbor5]}
+    final_roots = [] # list of roots of the trees in the forest
+
+    # if None, empty list; if not a list, convert
+    if roots is None:
+        roots = []
+    elif not isinstance(roots, list):
+        roots = [roots]
 
     # if roots not provided, we consider the first node found in each tree as the root
-    discovered_roots = []
 
-    for node in graph:
+    # create an ordered list starting with user-defined roots, followed by all remaining nodes
+    # this ensures the algorithm prioritizes starting trees from the specified roots
+    nodes_to_try = roots + [n for n in graph if n not in roots]
+    
+    for node in nodes_to_try:
 
-        if node not in visited:
+        if node not in visited and node in graph:
 
             # if node not visited, it means we have found a new tree in the forest
-            discovered_roots.append(node) # add the first node found in this tree as the root
-
+            final_roots.append(node) # add the node found in this tree as the root
             tree = algorithm(graph, node)
 
             # add all nodes from tree to forest
-            for tree_node in tree:
-
+            for tree_node, neighbors in tree.items():
                 # guarantee node exists
                 if tree_node not in forest:
                     forest[tree_node] = []
 
                 # copy neighbors
-                forest[tree_node] = tree[tree_node]
+                forest[tree_node].extend(neighbors)
+                # forest[tree_node] = tree[tree_node]
 
                 # guarantee children also exist
-                for neighbor in tree[tree_node]:
-
+                for neighbor in neighbors:
                     if neighbor not in forest:
                         forest[neighbor] = []
 
             # mark all nodes from this tree as visited
             visited.update(tree.keys())
-
-    if roots is None:
-        roots = discovered_roots
         
-    return forest, roots
+    return forest, final_roots
 
 def generate_comparison(G, roots, image_name_prefix, layout_type=None):
     # original = generate_graph(G)
@@ -372,8 +333,8 @@ def generate_comparison(G, roots, image_name_prefix, layout_type=None):
     # draw_graph(dfs_nx, root, layout_type, f'{image_name_prefix}_dfs_tree', ax=axs[2])
     
     original_nx = generate_graph(G)
-    bfs_dict, bfs_roots = spanning_forest(G, bfs)
-    dfs_dict, dfs_roots = spanning_forest(G, dfs)
+    bfs_dict, bfs_roots = spanning_forest(G, bfs, roots)
+    dfs_dict, dfs_roots = spanning_forest(G, dfs, roots)
 
     bfs_nx = generate_graph(bfs_dict)
     dfs_nx = generate_graph(dfs_dict)
@@ -389,12 +350,29 @@ def generate_comparison(G, roots, image_name_prefix, layout_type=None):
     draw_graph(bfs_nx, bfs_roots, layout_type, f'{image_name_prefix}_bfs_tree', ax=axs[1])
     draw_graph(dfs_nx, dfs_roots, layout_type, f'{image_name_prefix}_dfs_tree', ax=axs[2])
 
+    # add colored division lines between the graphs
+    for ax in axs:
+        ax.set_axis_on()
+        for spine in ax.spines.values():
+            spine.set_color('#cccccc')
+            spine.set_linewidth(2)
+            spine.set_linestyle('--')
+            spine.set_visible(True)
+        ax.set_facecolor('#fafafa')
+    
+    # plt.subplots_adjust(wspace=0.3) # reduce space between subplots
+
     plt.tight_layout()
     figures.savefig(f'images/{image_name_prefix}_comparison.png') # save the figure with all three graphs
 
 def main():
-    print('---------- 17 NODES ROOT 8 ----------')
+    print('---------- 15 NODES ROOT 8 ----------')
     generate_comparison(graph_root8, 8, 'root8', 'tree')
+    
+    # draw_graph(generate_graph(graph_root8), 8, 'tree', 'root8_original_graph', save=True)
+    # draw_graph(generate_graph(bfs(graph_root8, 8)), 8, 'tree', 'root8_bfs_tree', save=True) 
+    # draw_graph(generate_graph(dfs(graph_root8, 8)), 8, 'tree', 'root8_dfs_tree', save=True) 
+    
 
     print('---------- FOREST ----------')
     # original_nx = generate_graph(graph_forest)
@@ -407,11 +385,11 @@ def main():
 
     # figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
 
-    # draw_graph(original_nx, 8, None, 'forest_original_graph', ax=axs[0])
+    # draw_graph(original_nx, 4, None, 'forest_original_graph', save=True)
     # draw_graph(bfs_nx, bfs_roots, None, 'forest_bfs_tree', ax=axs[1])
     # draw_graph(dfs_nx, dfs_roots, None, 'forest_dfs_tree', ax=axs[2])
 
-    generate_comparison(graph_forest, None, 'forest', 'forest')
+    generate_comparison(graph_forest, [4, 15], 'forest', 'forest')
 
     # plt.tight_layout()
     # figures.savefig(f'images/forest_comparison.png') # save the figure with all three graphs
