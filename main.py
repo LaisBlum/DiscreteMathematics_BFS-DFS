@@ -2,32 +2,11 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from collections import deque
 
-dfs_graph_17nodes_root0 = {
-    0: [1, 2, 4, 7, 14],
-    1: [0, 2, 4, 5],
-    2: [0, 1, 6],
-    3: [6, 17],
-    4: [0, 1, 5],
-    5: [1, 4, 8, 9],
-    6: [2, 3, 9, 10],
-    7: [0, 8, 14],
-    8: [5, 7, 11],
-    9: [5, 6, 12, 13],
-    10: [6, 13, 17],
-    11: [8, 12, 14, 15],
-    12: [9, 11, 15, 16],
-    13: [9, 10, 17],
-    14: [0, 7, 11, 15],
-    15: [11, 12, 14, 16],
-    16: [12, 15],
-    17: [3, 10, 13],
-}
-
-dfs_graph_17nodes_root8 = {
+graph_root8 = {
     0: [4, 14],
     1: [2, 5],
     2: [1, 5],
-    3: [6],
+    3: [6, 3],
     4: [0, 7, 8],
     5: [1, 2, 9],
     6: [3, 9, 10],
@@ -36,37 +15,14 @@ dfs_graph_17nodes_root8 = {
     9: [5, 6, 8, 12, 13],
     10: [6, 13],
     11: [7],
-    12: [8, 9, 16],
-    13: [9, 10, 16, 17],
+    12: [8, 9, 15],
+    13: [9, 10, 15],
     14: [0],
-    15: [16],
-    16: [12, 13, 15, 17],
-    17: [13, 16]
-}
-
-bfs_graph_17nodes_root0 = {
-    0: [1, 4, 7, 14],
-    1: [0, 5],
-    2: [3, 5, 6],
-    3: [2, 6, 10],
-    4: [0],
-    5: [1, 2, 8, 9],
-    6: [2, 3, 9, 10],
-    7: [0, 8, 11, 14],
-    8: [5, 7, 9],
-    9: [5, 6, 8, 13],
-    10: [3, 6],
-    11: [7, 12, 15],
-    12: [11, 13, 15, 16],
-    13: [9, 12, 16],
-    14: [0, 7],
-    15: [11, 12, 16, 17],
-    16: [12, 13, 15, 17],
-    17: [15, 16],
+    15: [12, 13],
 }
 
 # generate forest
-bfs_graph_17nodes_root8 = {
+graph_forest = {
     0: [2],
     1: [0, 2, 5, 4],
     2: [0, 1, 3, 5, 6],
@@ -87,7 +43,6 @@ bfs_graph_17nodes_root8 = {
     17: [11],
 }
 
-# ----- Peterson's graph -----
 petersen_graph = {
     'A':  ['B', 'E', 'A1'],
     'B':  ['A', 'C', 'B1'],
@@ -102,8 +57,50 @@ petersen_graph = {
     'E1': ['B1', 'C1', 'E']
 }
 
-# ----- Layouts -----
+# dfs_graph_17nodes_root0 = {
+#     0: [1, 2, 4, 7, 14],
+#     1: [0, 2, 4, 5],
+#     2: [0, 1, 6],
+#     3: [6, 17],
+#     4: [0, 1, 5],
+#     5: [1, 4, 8, 9],
+#     6: [2, 3, 9, 10],
+#     7: [0, 8, 14],
+#     8: [5, 7, 11],
+#     9: [5, 6, 12, 13],
+#     10: [6, 13, 17],
+#     11: [8, 12, 14, 15],
+#     12: [9, 11, 15, 16],
+#     13: [9, 10, 17],
+#     14: [0, 7, 11, 15],
+#     15: [11, 12, 14, 16],
+#     16: [12, 15],
+#     17: [3, 10, 13],
+# }
 
+# bfs_graph_17nodes_root0 = {
+#     0: [1, 4, 7, 14],
+#     1: [0, 5],
+#     2: [3, 5, 6],
+#     3: [2, 6, 10],
+#     4: [0],
+#     5: [1, 2, 8, 9],
+#     6: [2, 3, 9, 10],
+#     7: [0, 8, 11, 14],
+#     8: [5, 7, 9],
+#     9: [5, 6, 8, 13],
+#     10: [3, 6],
+#     11: [7, 12, 15],
+#     12: [11, 13, 15, 16],
+#     13: [9, 12, 16],
+#     14: [0, 7],
+#     15: [11, 12, 16, 17],
+#     16: [12, 13, 15, 17],
+#     17: [15, 16],
+# }
+
+
+# ----- Layouts -----
 def tree_layout(G, root):
     layers = {} # layers = {layer: node1, node2}
     visited = set()
@@ -191,35 +188,12 @@ def generate_graph(graph): # root is the node that starts the tree
 
     return G
 
-    # plt.figure(figsize=(8,8)) 
-
-    # pos = get_layout(G, layout_type=layout_type, root=root)
-
-    # node_colors = ['green' if node == root else 'black' for node in G.nodes()]
-
-    # nx.draw(
-    #     G,
-    #     pos,
-    #     with_labels=True,
-    #     node_color=node_colors,
-    #     node_size=800,
-    #     font_color='white',
-    #     font_weight='bold', 
-    #     width=3
-    # )
-
-    # plt.margins(0.2)
-    # # plt.title(f'{image_name}', pad=20)
-    # # plt.tight_layout()
-    # plt.savefig(f'images/{image_name}.png')
-    # plt.clf() # for the image not to be overlap by the last one, when calling the function more then one time
-
 def draw_graph(G, root, layout_type=None, image_name=None, ax=None, save=False):
     
     if ax is None:
         fig = plt.figure(num=image_name, figsize=(8,8)) # 'num' --> title shown in the window
         ax = plt.gca() # get current axis
-
+    
     pos = get_layout(G, layout_type=layout_type, root=root)
     node_colors = ['green' if node == root else 'black' for node in G.nodes()]
 
@@ -229,7 +203,7 @@ def draw_graph(G, root, layout_type=None, image_name=None, ax=None, save=False):
         ax=ax,
         with_labels=True,
         node_color=node_colors,
-        node_size=800,
+        node_size=650,
         font_color='white',
         font_weight='bold', 
         width=3
@@ -239,20 +213,9 @@ def draw_graph(G, root, layout_type=None, image_name=None, ax=None, save=False):
 
     if image_name: # if not None or empty string
         ax.set_title(image_name)
-
     if save:
         ax.get_figure().savefig(f'images/{image_name}.png') # save the figure using the axis, so it saves only the graph without the title and margins
-
-    # plt.title(f'{image_name}', pad=20)
-    # plt.tight_layout()
-
-    # fig = plt.gcf() # get current figure
-    # plt.clf() # for the image not to be overlap by the last one, when calling the function more then one time
     
-
-    # ax = draw_graph(G, root)
-    # fig = ax.get_figure()
-    # fig.savefig("teste.png")
     return ax
 
 def get_neighbor_not_visited(graph, node, visited):
@@ -296,37 +259,6 @@ def bfs(graph, root):
 
     return tree
 
-def bfs_forest(graph):
-
-    visited = set()
-    forest = {} # forest = {node_tree1: [neighbor1, neighbor2], node_tree1: [neighbor3] node_tree2: [neighbor4, neighbor5]}
-
-    for node in graph:
-
-        if node not in visited:
-
-            tree = bfs(graph, node)
-
-            # add all nodes from tree to forest
-            for tree_node in tree:
-
-                # guarantee node exists
-                if tree_node not in forest:
-                    forest[tree_node] = []
-
-                # copy neighbors
-                forest[tree_node] = tree[tree_node]
-
-                # guarantee children also exist
-                for neighbor in tree[tree_node]:
-
-                    if neighbor not in forest:
-                        forest[neighbor] = []
-
-            # mark all nodes from this tree as visited
-            visited.update(tree.keys())
-
-    return forest
 
 def dfs(graph, root):
     visited = set()
@@ -361,98 +293,98 @@ def dfs(graph, root):
 
     return tree
 
-# print('GRAPH:')
-# generate_graph(graph, 1, 'graph')
-# dfs_tree = dfs(graph, 1)
-# generate_graph(dfs_tree, 1, 'dfs_tree_graph')
-# print(f'\n{"-"*20}\n')
+def spanning_forest(graph, algorithm, roots=None):
 
-# print('DFS - GRAPH 17 NODES ROOT 0:')
-# generate_graph(dfs_graph_17nodes_root0, 0, 'dfs_17nodes_root0_graph', 'tree')
-# dfs_tree_17nodes_root0 = dfs(dfs_graph_17nodes_root0, 0)
-# generate_graph(dfs_tree_17nodes_root0, 0, 'dfs_17nodes_root0_tree', 'tree')
-# print(f'\n{"-"*20}\n')
+    visited = set()
+    forest = {} # forest = {node_tree1: [neighbor1, neighbor2], node_tree1: [neighbor3] node_tree2: [neighbor4, neighbor5]}
+
+    # if roots not provided, we consider the first node found in each tree as the root
+    discovered_roots = []
+
+    for node in graph:
+
+        if node not in visited:
+
+            # if node not visited, it means we have found a new tree in the forest
+            discovered_roots.append(node) # add the first node found in this tree as the root
+
+            tree = algorithm(graph, node)
+
+            # add all nodes from tree to forest
+            for tree_node in tree:
+
+                # guarantee node exists
+                if tree_node not in forest:
+                    forest[tree_node] = []
+
+                # copy neighbors
+                forest[tree_node] = tree[tree_node]
+
+                # guarantee children also exist
+                for neighbor in tree[tree_node]:
+
+                    if neighbor not in forest:
+                        forest[neighbor] = []
+
+            # mark all nodes from this tree as visited
+            visited.update(tree.keys())
+
+    if roots is None:
+        roots = discovered_roots
+        
+    return forest, roots
+
+def generate_comparison(G, root, image_name_prefix, layout_type=None):
+    original_nx = generate_graph(G)
+    bfs_nx = generate_graph(bfs(G, root))
+    dfs_nx = generate_graph(dfs(G, root))
+
+    if layout_type is None:
+        layout_type = 'spring' # default layout
+
+    figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
+
+    draw_graph(original_nx, root, layout_type, f'{image_name_prefix}_original_graph', ax=axs[0])
+    draw_graph(bfs_nx, root, layout_type, f'{image_name_prefix}_bfs_tree', ax=axs[1])
+    draw_graph(dfs_nx, root, layout_type, f'{image_name_prefix}_dfs_tree', ax=axs[2])
+
+    plt.tight_layout()
+    figures.savefig(f'images/{image_name_prefix}_comparison.png') # save the figure with all three graphs
+
+def main():
+    print('---------- 17 NODES ROOT 8 ----------')
+    generate_comparison(graph_root8, 8, 'root8', 'tree')
+
+    print('---------- FOREST ----------')
+    # generate_comparison(graph_forest, 8, 'forest', None)
+    original_nx = generate_graph(graph_forest)
+
+    forest_dict_bfs, bfs_roots = spanning_forest(graph_forest, bfs)
+    bfs_nx = generate_graph(forest_dict_bfs)
+
+    forest_dict_dfs, dfs_roots = spanning_forest(graph_forest, dfs)
+    dfs_nx = generate_graph(forest_dict_dfs)
+    # dfs_nx = generate_graph(spanning_forest(graph_forest, dfs, 8))
+
+    figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
+
+    draw_graph(original_nx, 8, None, 'forest_original_graph', ax=axs[0])
+    draw_graph(bfs_nx, 8, None, 'forest_bfs_tree', ax=axs[1])
+    draw_graph(dfs_nx, 8, None, 'forest_dfs_tree', ax=axs[2])
+
+    plt.tight_layout()
+    figures.savefig(f'images/forest_comparison.png') # save the figure with all three graphs
+
+    # ---------- PETERSEN GRAPH  ----------
+    print('---------- PETERSEN GRAPH ----------')
+    generate_comparison(petersen_graph, 'A', 'petersen_A', 'petersen')
+    generate_comparison(petersen_graph, 'A1', 'petersen_A1', 'petersen')
+
+    # ---------- COMPLETE GRAPH ----------
+    print('---------- COMPLETE GRAPH: ----------')
+    generate_comparison(nx.complete_graph(10), 0, 'complete', 'complete')
+
+    plt.close()
 
 
-
-
-
-# print('DFS - GRAPH 17 NODES ROOT 8:')
-# generate_graph(dfs_graph_17nodes_root8, 8, 'dfs_17nodes_root8_graph', 'tree')
-# dfs_tree_17nodes_root8 = dfs(dfs_graph_17nodes_root8, 8)
-# generate_graph(dfs_tree_17nodes_root8, 8, 'dfs_17nodes_root8_tree', 'tree')
-# print(f'\n{"-"*20}\n')
-
-# print('BFS - GRAPH 17 NODES ROOT 0:')
-# generate_graph(bfs_graph_17nodes_root0, 0, 'bfs_17nodes_root0_graph', 'tree')
-# bfs_tree_17nodes_root0 = bfs(bfs_graph_17nodes_root0, 0)
-# generate_graph(bfs_tree_17nodes_root0, 0, 'bfs_17nodes_root0_tree', 'tree')
-# print(f'\n{"-"*20}\n')
-
-# # generate forest
-# print('BFS - GRAPH 17 NODES ROOT 8:')
-# generate_graph(bfs_graph_17nodes_root8, 8, 'bfs_17nodes_root8_graph')
-# bfs_tree_17nodes_root8 = bfs(bfs_graph_17nodes_root8, 8)
-# generate_graph(bfs_tree_17nodes_root8, 8, 'bfs_17nodes_root8_tree')
-# bfs_forest_17nodes_root8 = bfs_forest(bfs_graph_17nodes_root8)
-# generate_graph(bfs_forest_17nodes_root8, 8, 'bfs_17nodes_root8_forest')
-# print(f'\n{"-"*20}\n')
-
-# ----- PETERSEN GRAPH  -----
-print('----- PETERSEN GRAPH: -----')
-
-petersen_original_nx = generate_graph(petersen_graph)
-petersen_bfs_nx = generate_graph(bfs(petersen_graph, 'A'))
-petersen_dfs_nx = generate_graph(dfs(petersen_graph, 'A'))
-
-# -- save individual graphs with root A -- #
-# draw_graph(petersen_original_nx, 'A', 'petersen', 'petersen_A_original', save=True)
-# plt.close() # close the figure to avoid overlap when drawing the next one
-
-# draw_graph(petersen_bfs_nx, 'A', 'petersen', 'petersen_A_bfs', save=True)
-# plt.close()
-
-# draw_graph(petersen_dfs_nx, 'A', 'petersen', 'petersen_A_dfs', save=True)
-# plt.close()
-
-petersen_figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
-
-draw_graph(petersen_original_nx, 'A', 'petersen', 'petersen_A_original_graph', ax=axs[0])
-draw_graph(petersen_bfs_nx, 'A', 'petersen', 'petersen_A_bfs_tree', ax=axs[1])
-draw_graph(petersen_dfs_nx, 'A', 'petersen', 'petersen_A_dfs_tree', ax=axs[2])
-
-plt.tight_layout()
-petersen_figures.savefig('images/petersen_A_comparison.png') # save the figure with all three graphs
-plt.show()
-
-### -- save individual graphs with root A1 -- ###
-petersen_original_nx = generate_graph(petersen_graph)
-petersen_bfs_nx = generate_graph(bfs(petersen_graph, 'A1'))
-petersen_dfs_nx = generate_graph(dfs(petersen_graph, 'A1'))
-# draw_graph(petersen_original_nx, 'A1', 'petersen', 'petersen_A1_original', save=True)
-# plt.close() # close the figure to avoid overlap when drawing the next one
-
-# draw_graph(petersen_bfs_nx, 'A1', 'petersen', 'petersen_A1_bfs', save=True)
-# plt.close()
-
-# draw_graph(petersen_dfs_nx, 'A1', 'petersen', 'petersen_A1_dfs', save=True)
-# plt.close()
-
-petersen_figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
-
-draw_graph(petersen_original_nx, 'A1', 'petersen', 'petersen_A1_original_graph', ax=axs[0])
-draw_graph(petersen_bfs_nx, 'A1', 'petersen', 'petersen_A1_bfs_tree', ax=axs[1])
-draw_graph(petersen_dfs_nx, 'A1', 'petersen', 'petersen_A1_dfs_tree', ax=axs[2])
-
-plt.tight_layout()
-petersen_figures.savefig('images/petersen_A1_comparison.png') # save the figure with all three graphs
-plt.show()
-
-# ----- COMPLETE GRAPH -----
-complete_original_nx = nx.complete_graph(10) # complete graph with 10 nodes
-complete_bfs_nx = generate_graph(bfs(nx.complete_graph(10), 0))
-complete_dfs_nx = generate_graph(dfs(nx.complete_graph(10), 0))
-
-
-
-plt.close()
+main()
