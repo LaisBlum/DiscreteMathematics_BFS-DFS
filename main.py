@@ -179,10 +179,8 @@ def get_layout(G, layout_type='spring', root=None):
     else:
         raise ValueError(f"Unknown layout: {layout_type}")
 
-def generate_graph(graph, root, image_name, layout_type=None): # root is the node that starts the tree
+def generate_graph(graph): # root is the node that starts the tree
     G = nx.Graph()
-
-    plt.figure(figsize=(8,8)) 
 
     # add nodes
     for node in graph:
@@ -191,13 +189,44 @@ def generate_graph(graph, root, image_name, layout_type=None): # root is the nod
         for neighbor in graph[node]:
             G.add_edge(node, neighbor)
 
-    pos = get_layout(G, layout_type=layout_type, root=root)
+    return G
 
+    # plt.figure(figsize=(8,8)) 
+
+    # pos = get_layout(G, layout_type=layout_type, root=root)
+
+    # node_colors = ['green' if node == root else 'black' for node in G.nodes()]
+
+    # nx.draw(
+    #     G,
+    #     pos,
+    #     with_labels=True,
+    #     node_color=node_colors,
+    #     node_size=800,
+    #     font_color='white',
+    #     font_weight='bold', 
+    #     width=3
+    # )
+
+    # plt.margins(0.2)
+    # # plt.title(f'{image_name}', pad=20)
+    # # plt.tight_layout()
+    # plt.savefig(f'images/{image_name}.png')
+    # plt.clf() # for the image not to be overlap by the last one, when calling the function more then one time
+
+def draw_graph(G, root, layout_type=None, image_name=None, ax=None, save=False):
+    
+    if ax is None:
+        fig = plt.figure(num=image_name, figsize=(8,8)) # 'num' --> title shown in the window
+        ax = plt.gca() # get current axis
+
+    pos = get_layout(G, layout_type=layout_type, root=root)
     node_colors = ['green' if node == root else 'black' for node in G.nodes()]
 
     nx.draw(
         G,
         pos,
+        ax=ax,
         with_labels=True,
         node_color=node_colors,
         node_size=800,
@@ -207,10 +236,24 @@ def generate_graph(graph, root, image_name, layout_type=None): # root is the nod
     )
 
     plt.margins(0.2)
+
+    if image_name: # if not None or empty string
+        ax.set_title(image_name)
+
+    if save:
+        ax.get_figure().savefig(f'images/{image_name}.png') # save the figure using the axis, so it saves only the graph without the title and margins
+
     # plt.title(f'{image_name}', pad=20)
     # plt.tight_layout()
-    plt.savefig(f'images/{image_name}.png')
-    plt.clf() # for the image not to be overlap by the last one, when calling the function more then one time
+
+    # fig = plt.gcf() # get current figure
+    # plt.clf() # for the image not to be overlap by the last one, when calling the function more then one time
+    
+
+    # ax = draw_graph(G, root)
+    # fig = ax.get_figure()
+    # fig.savefig("teste.png")
+    return ax
 
 def get_neighbor_not_visited(graph, node, visited):
 
@@ -253,23 +296,10 @@ def bfs(graph, root):
 
     return tree
 
-# generate forest with the roots being the first node of the graph that is not visited yet
-# def bfs_forest(graph):
-#     visited = set()
-#     forest = {} # forest = {node_tree1: [neighbor1, neighbor2], node_tree1: [neighbor3] node_tree2: [neighbor4, neighbor5]}
-
-#     for node in graph:
-#         if node not in visited:
-#             tree = bfs(graph, node)
-#             for node_tree in tree:
-#                 forest[node_tree] = tree[node_tree]
-#             visited.update(tree.keys()) # add all nodes of the tree to the visited set
-        
-#     return forest
 def bfs_forest(graph):
 
     visited = set()
-    forest = {}
+    forest = {} # forest = {node_tree1: [neighbor1, neighbor2], node_tree1: [neighbor3] node_tree2: [neighbor4, neighbor5]}
 
     for node in graph:
 
@@ -343,35 +373,57 @@ def dfs(graph, root):
 # generate_graph(dfs_tree_17nodes_root0, 0, 'dfs_17nodes_root0_tree', 'tree')
 # print(f'\n{"-"*20}\n')
 
-print('DFS - GRAPH 17 NODES ROOT 8:')
-generate_graph(dfs_graph_17nodes_root8, 8, 'dfs_17nodes_root8_graph', 'tree')
-dfs_tree_17nodes_root8 = dfs(dfs_graph_17nodes_root8, 8)
-generate_graph(dfs_tree_17nodes_root8, 8, 'dfs_17nodes_root8_tree', 'tree')
-print(f'\n{"-"*20}\n')
 
-print('BFS - GRAPH 17 NODES ROOT 0:')
-generate_graph(bfs_graph_17nodes_root0, 0, 'bfs_17nodes_root0_graph', 'tree')
-bfs_tree_17nodes_root0 = bfs(bfs_graph_17nodes_root0, 0)
-generate_graph(bfs_tree_17nodes_root0, 0, 'bfs_17nodes_root0_tree', 'tree')
-print(f'\n{"-"*20}\n')
 
-# generate forest
-print('BFS - GRAPH 17 NODES ROOT 8:')
-generate_graph(bfs_graph_17nodes_root8, 8, 'bfs_17nodes_root8_graph')
-bfs_tree_17nodes_root8 = bfs(bfs_graph_17nodes_root8, 8)
-generate_graph(bfs_tree_17nodes_root8, 8, 'bfs_17nodes_root8_tree')
-bfs_forest_17nodes_root8 = bfs_forest(bfs_graph_17nodes_root8)
-generate_graph(bfs_forest_17nodes_root8, 8, 'bfs_17nodes_root8_forest')
-print(f'\n{"-"*20}\n')
 
-# generate peterson graph
-print('PETERSON GRAPH:')
-generate_graph(petersen_graph, 'A', 'petersen_graph', 'petersen')
-bfs_tree_petersen = bfs(petersen_graph, 'A')
-generate_graph(bfs_tree_petersen, 'A', 'petersen_bfs_tree', 'petersen')
-dfs_tree_petersen = dfs(petersen_graph, 'A')
-generate_graph(dfs_tree_petersen, 'A', 'petersen_dfs_tree', 'petersen')
 
+# print('DFS - GRAPH 17 NODES ROOT 8:')
+# generate_graph(dfs_graph_17nodes_root8, 8, 'dfs_17nodes_root8_graph', 'tree')
+# dfs_tree_17nodes_root8 = dfs(dfs_graph_17nodes_root8, 8)
+# generate_graph(dfs_tree_17nodes_root8, 8, 'dfs_17nodes_root8_tree', 'tree')
+# print(f'\n{"-"*20}\n')
+
+# print('BFS - GRAPH 17 NODES ROOT 0:')
+# generate_graph(bfs_graph_17nodes_root0, 0, 'bfs_17nodes_root0_graph', 'tree')
+# bfs_tree_17nodes_root0 = bfs(bfs_graph_17nodes_root0, 0)
+# generate_graph(bfs_tree_17nodes_root0, 0, 'bfs_17nodes_root0_tree', 'tree')
+# print(f'\n{"-"*20}\n')
+
+# # generate forest
+# print('BFS - GRAPH 17 NODES ROOT 8:')
+# generate_graph(bfs_graph_17nodes_root8, 8, 'bfs_17nodes_root8_graph')
+# bfs_tree_17nodes_root8 = bfs(bfs_graph_17nodes_root8, 8)
+# generate_graph(bfs_tree_17nodes_root8, 8, 'bfs_17nodes_root8_tree')
+# bfs_forest_17nodes_root8 = bfs_forest(bfs_graph_17nodes_root8)
+# generate_graph(bfs_forest_17nodes_root8, 8, 'bfs_17nodes_root8_forest')
+# print(f'\n{"-"*20}\n')
+
+# ----- PETERSEN GRAPH  -----
+print('----- PETERSEN GRAPH: -----')
+
+petersen_original_nx = generate_graph(petersen_graph)
+petersen_bfs_nx = generate_graph(bfs(petersen_graph, 'A'))
+petersen_dfs_nx = generate_graph(dfs(petersen_graph, 'A'))
+
+# save individual graphs
+draw_graph(petersen_original_nx, 'A', 'petersen', 'petersen_original', save=True)
+plt.close() # close the figure to avoid overlap when drawing the next one
+
+draw_graph(petersen_bfs_nx, 'A', 'petersen', 'petersen_bfs', save=True)
+plt.close()
+
+draw_graph(petersen_dfs_nx, 'A', 'petersen', 'petersen_dfs', save=True)
+plt.close()
+
+petersen_figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
+
+draw_graph(petersen_original_nx, 'A', layout_type='petersen', image_name='petersen_original_graph', ax=axs[0])
+draw_graph(petersen_bfs_nx, 'A', layout_type='petersen', image_name='petersen_bfs_tree', ax=axs[1])
+draw_graph(petersen_dfs_nx, 'A', layout_type='petersen', image_name='petersen_dfs_tree', ax=axs[2])
+
+plt.tight_layout()
+petersen_figures.savefig('images/petersen_comparison.png') # save the figure with all three graphs
+plt.show()
 
 
 plt.close()
