@@ -2,17 +2,6 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from collections import deque
 
-
-graph = {
-    1: [2, 4, 5],
-    2: [1, 3, 6, 7],
-    3: [2],
-    4: [1, 7],
-    5: [1],
-    6: [2],
-    7: [2, 4],
-}
-
 dfs_graph_17nodes_root0 = {
     0: [1, 2, 4, 7, 14],
     1: [0, 2, 4, 5],
@@ -89,17 +78,31 @@ bfs_graph_17nodes_root8 = {
     8: [4, 5, 7, 9],
     9: [5, 8, 10, 13],
     10: [3, 6, 9, 13],
-    11: [14],
+    11: [14, 15, 17],
     12: [13, 16],
     13: [9, 10, 12, 16],
-    14: [11],
-    15: [17],
-    16: [12, 13, 17],
-    17: [15, 16],
+    14: [11, 15],
+    15: [11, 14],
+    16: [12, 13],
+    17: [11],
 }
 
+# ----- Peterson's graph -----
+petersen_graph = {
+    'A':  ['B', 'E', 'A1'],
+    'B':  ['A', 'C', 'B1'],
+    'C':  ['B', 'D', 'C1'],
+    'D':  ['C', 'E', 'D1'],
+    'E':  ['D', 'A', 'E1'],
 
-# plt.show()
+    'A1': ['C1', 'D1', 'A'],
+    'B1': ['D1', 'E1', 'B'],
+    'C1': ['E1', 'A1', 'C'],
+    'D1': ['A1', 'B1', 'D'],
+    'E1': ['B1', 'C1', 'E']
+}
+
+# ----- Layouts -----
 
 def tree_layout(G, root):
     layers = {} # layers = {layer: node1, node2}
@@ -136,7 +139,47 @@ def tree_layout(G, root):
 
     return pos
 
-def generate_graph(graph, root, image_name): # root is the node that starts the tree
+def petersen_layout():
+
+    return {
+
+        # outer pentagon
+        'A':  (0, 3),
+        'B':  (3, 1),
+        'C':  (2, -2.5),
+        'D':  (-2, -2.5),
+        'E':  (-3, 1),
+
+        # inner star
+        'A1': (0, 1.5),
+        'B1': (1.5, 0.5),
+        'C1': (1, -1),
+        'D1': (-1, -1),
+        'E1': (-1.5, 0.5)
+    }
+
+def get_layout(G, layout_type='spring', root=None):
+
+    # default
+    if layout_type is None or layout_type == 'spring':
+        return nx.spring_layout(G, seed=42)
+
+    # tree
+    elif layout_type == 'tree':
+        return tree_layout(G, root)
+
+    # petersen
+    elif layout_type == 'petersen':
+        return petersen_layout()
+
+    # complete graph / circular
+    elif layout_type == 'complete':
+        return nx.circular_layout(G)
+
+    else:
+        raise ValueError(f"Unknown layout: {layout_type}")
+
+def generate_graph(graph, root, image_name, layout_type=None): # root is the node that starts the tree
     G = nx.Graph()
 
     plt.figure(figsize=(8,8)) 
@@ -148,13 +191,13 @@ def generate_graph(graph, root, image_name): # root is the node that starts the 
         for neighbor in graph[node]:
             G.add_edge(node, neighbor)
 
-    #pos = tree_layout(G, root)
+    pos = get_layout(G, layout_type=layout_type, root=root)
 
     node_colors = ['green' if node == root else 'black' for node in G.nodes()]
 
     nx.draw(
         G,
-        #pos,
+        pos,
         with_labels=True,
         node_color=node_colors,
         node_size=800,
@@ -164,6 +207,8 @@ def generate_graph(graph, root, image_name): # root is the node that starts the 
     )
 
     plt.margins(0.2)
+    # plt.title(f'{image_name}', pad=20)
+    # plt.tight_layout()
     plt.savefig(f'images/{image_name}.png')
     plt.clf() # for the image not to be overlap by the last one, when calling the function more then one time
 
@@ -209,19 +254,49 @@ def bfs(graph, root):
     return tree
 
 # generate forest with the roots being the first node of the graph that is not visited yet
-def bfs_forest(graph, root):
+# def bfs_forest(graph):
+#     visited = set()
+#     forest = {} # forest = {node_tree1: [neighbor1, neighbor2], node_tree1: [neighbor3] node_tree2: [neighbor4, neighbor5]}
+
+#     for node in graph:
+#         if node not in visited:
+#             tree = bfs(graph, node)
+#             for node_tree in tree:
+#                 forest[node_tree] = tree[node_tree]
+#             visited.update(tree.keys()) # add all nodes of the tree to the visited set
+        
+#     return forest
+def bfs_forest(graph):
+
     visited = set()
-    forest = {} # forest = {node_tree1: [neighbor1, neighbor2], node_tree1: [neighbor3] node_tree2: [neighbor4, neighbor5]}
+    forest = {}
 
     for node in graph:
+
         if node not in visited:
+
             tree = bfs(graph, node)
-            for node_tree in tree:
-                forest[node_tree] = tree[node_tree]
-            visited.update(tree.keys()) # add all nodes of the tree to the visited set
-        
+
+            # add all nodes from tree to forest
+            for tree_node in tree:
+
+                # guarantee node exists
+                if tree_node not in forest:
+                    forest[tree_node] = []
+
+                # copy neighbors
+                forest[tree_node] = tree[tree_node]
+
+                # guarantee children also exist
+                for neighbor in tree[tree_node]:
+
+                    if neighbor not in forest:
+                        forest[neighbor] = []
+
+            # mark all nodes from this tree as visited
+            visited.update(tree.keys())
+
     return forest
-    
 
 def dfs(graph, root):
     visited = set()
@@ -229,8 +304,6 @@ def dfs(graph, root):
     stack = [root] # no need to use deque, since list append() and pop() from the end are already O(1)
                            
     visited.add(root)
-
-    # i = 0
 
     while stack:
 
@@ -253,45 +326,52 @@ def dfs(graph, root):
             tree[node].append(neighbor_not_visited) 
 
             stack.append(neighbor_not_visited)
-
-            # image_name = f'dfs_tree_{node}_{i}'
-            # generate_graph(tree, root, image_name)
-            # i += 1
         else:
             stack.pop() # remove the last element in the stack
 
     return tree
 
-print('GRAPH:')
-generate_graph(graph, 1, 'graph')
-dfs_tree = dfs(graph, 1)
-generate_graph(dfs_tree, 1, 'dfs_tree_graph')
-print(f'\n{"-"*20}\n')
+# print('GRAPH:')
+# generate_graph(graph, 1, 'graph')
+# dfs_tree = dfs(graph, 1)
+# generate_graph(dfs_tree, 1, 'dfs_tree_graph')
+# print(f'\n{"-"*20}\n')
 
-print('DFS - GRAPH 17 NODES ROOT 0:')
-generate_graph(dfs_graph_17nodes_root0, 0, 'dfs_graph_17nodes_root0')
-dfs_tree_17nodes_root0 = dfs(dfs_graph_17nodes_root0, 0)
-generate_graph(dfs_tree_17nodes_root0, 0, 'dfs_tree_17nodes_root0')
-print(f'\n{"-"*20}\n')
+# print('DFS - GRAPH 17 NODES ROOT 0:')
+# generate_graph(dfs_graph_17nodes_root0, 0, 'dfs_17nodes_root0_graph', 'tree')
+# dfs_tree_17nodes_root0 = dfs(dfs_graph_17nodes_root0, 0)
+# generate_graph(dfs_tree_17nodes_root0, 0, 'dfs_17nodes_root0_tree', 'tree')
+# print(f'\n{"-"*20}\n')
 
 print('DFS - GRAPH 17 NODES ROOT 8:')
-generate_graph(dfs_graph_17nodes_root8, 8, 'dfs_graph_17nodes_root8')
+generate_graph(dfs_graph_17nodes_root8, 8, 'dfs_17nodes_root8_graph', 'tree')
 dfs_tree_17nodes_root8 = dfs(dfs_graph_17nodes_root8, 8)
-generate_graph(dfs_tree_17nodes_root8, 8, 'dfs_tree_17nodes_root8')
+generate_graph(dfs_tree_17nodes_root8, 8, 'dfs_17nodes_root8_tree', 'tree')
 print(f'\n{"-"*20}\n')
 
 print('BFS - GRAPH 17 NODES ROOT 0:')
-generate_graph(bfs_graph_17nodes_root0, 0, 'bfs_graph_17nodes_root0')
+generate_graph(bfs_graph_17nodes_root0, 0, 'bfs_17nodes_root0_graph', 'tree')
 bfs_tree_17nodes_root0 = bfs(bfs_graph_17nodes_root0, 0)
-generate_graph(bfs_tree_17nodes_root0, 0, 'bfs_tree_17nodes_root0')
+generate_graph(bfs_tree_17nodes_root0, 0, 'bfs_17nodes_root0_tree', 'tree')
 print(f'\n{"-"*20}\n')
 
 # generate forest
 print('BFS - GRAPH 17 NODES ROOT 8:')
-generate_graph(bfs_graph_17nodes_root8, 8, 'bfs_graph_17nodes_root8')
+generate_graph(bfs_graph_17nodes_root8, 8, 'bfs_17nodes_root8_graph')
 bfs_tree_17nodes_root8 = bfs(bfs_graph_17nodes_root8, 8)
-generate_graph(bfs_tree_17nodes_root8, 8, 'bfs_tree_17nodes_root8')
-bfs_forest_17nodes_root8 = bfs_forest(bfs_graph_17nodes_root8, 8)
-generate_graph(bfs_forest_17nodes_root8, 8, 'bfs_forest_17nodes_root8')
+generate_graph(bfs_tree_17nodes_root8, 8, 'bfs_17nodes_root8_tree')
+bfs_forest_17nodes_root8 = bfs_forest(bfs_graph_17nodes_root8)
+generate_graph(bfs_forest_17nodes_root8, 8, 'bfs_17nodes_root8_forest')
+print(f'\n{"-"*20}\n')
+
+# generate peterson graph
+print('PETERSON GRAPH:')
+generate_graph(petersen_graph, 'A', 'petersen_graph', 'petersen')
+bfs_tree_petersen = bfs(petersen_graph, 'A')
+generate_graph(bfs_tree_petersen, 'A', 'petersen_bfs_tree', 'petersen')
+dfs_tree_petersen = dfs(petersen_graph, 'A')
+generate_graph(dfs_tree_petersen, 'A', 'petersen_dfs_tree', 'petersen')
+
+
 
 plt.close()
