@@ -23,6 +23,7 @@ graph_root8 = {
 
 # generate forest
 graph_forest = {
+    8: [4, 5, 7, 9],
     0: [2],
     1: [0, 2, 5, 4],
     2: [0, 1, 3, 5, 6],
@@ -31,7 +32,6 @@ graph_forest = {
     5: [1, 2, 4, 6, 8, 9],
     6: [2, 3, 5, 10],
     7: [4, 8],
-    8: [4, 5, 7, 9],
     9: [5, 8, 10, 13],
     10: [3, 6, 9, 13],
     11: [14, 15, 17],
@@ -136,6 +136,18 @@ def tree_layout(G, root):
 
     return pos
 
+def forest_layout(G, roots):
+    # generate a layout for each tree in the forest and combine them
+    pos = {}
+    x_offset = 0
+    for root in roots:
+        tree_pos = tree_layout(G, root)
+        for node, (x, y) in tree_pos.items():
+            pos[node] = (x + x_offset, y)
+        x_offset += 20 # add some space between trees
+
+    return pos
+
 def petersen_layout():
 
     return {
@@ -155,7 +167,15 @@ def petersen_layout():
         'E1': (-1.5, 0.5)
     }
 
-def get_layout(G, layout_type='spring', root=None):
+def get_layout(G, layout_type='spring', roots=None):
+
+    # take just the first root as a reference for the layout
+    actual_root = None
+    if roots is not None:
+        if isinstance(roots, list):
+            actual_root = roots[0] if len(roots) > 0 else None
+        else:
+            actual_root = roots
 
     # default
     if layout_type is None or layout_type == 'spring':
@@ -163,8 +183,12 @@ def get_layout(G, layout_type='spring', root=None):
 
     # tree
     elif layout_type == 'tree':
-        return tree_layout(G, root)
+        return tree_layout(G, roots[0] if roots is not None else actual_root)
 
+    # forest
+    elif layout_type == 'forest':
+        return forest_layout(G, roots if roots is not None else [actual_root])
+    
     # petersen
     elif layout_type == 'petersen':
         return petersen_layout()
@@ -188,14 +212,17 @@ def generate_graph(graph): # root is the node that starts the tree
 
     return G
 
-def draw_graph(G, root, layout_type=None, image_name=None, ax=None, save=False):
+def draw_graph(G, roots, layout_type=None, image_name=None, ax=None, save=False):
     
     if ax is None:
         fig = plt.figure(num=image_name, figsize=(8,8)) # 'num' --> title shown in the window
         ax = plt.gca() # get current axis
     
-    pos = get_layout(G, layout_type=layout_type, root=root)
-    node_colors = ['green' if node == root else 'black' for node in G.nodes()]
+    if not isinstance(roots, list):
+        roots = [roots] # if roots is not a list, convert it to a list for easier handling
+
+    pos = get_layout(G, layout_type=layout_type, roots=roots)
+    node_colors = ['green' if node in roots else 'black' for node in G.nodes()]
 
     nx.draw(
         G,
@@ -258,7 +285,6 @@ def bfs(graph, root):
                 queue.append(neighbor)
 
     return tree
-
 
 def dfs(graph, root):
     visited = set()
@@ -334,19 +360,34 @@ def spanning_forest(graph, algorithm, roots=None):
         
     return forest, roots
 
-def generate_comparison(G, root, image_name_prefix, layout_type=None):
-    original_nx = generate_graph(G)
-    bfs_nx = generate_graph(bfs(G, root))
-    dfs_nx = generate_graph(dfs(G, root))
+def generate_comparison(G, roots, image_name_prefix, layout_type=None):
+    # original = generate_graph(G)
+    # bfs_nx = generate_graph(bfs(G, root))
+    # dfs_nx = generate_graph(dfs(G, root))
 
-    if layout_type is None:
-        layout_type = 'spring' # default layout
+    # figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
+
+    # draw_graph(original, root, layout_type, f'{image_name_prefix}_original_graph', ax=axs[0])
+    # draw_graph(bfs_nx, root, layout_type, f'{image_name_prefix}_bfs_tree', ax=axs[1])
+    # draw_graph(dfs_nx, root, layout_type, f'{image_name_prefix}_dfs_tree', ax=axs[2])
+    
+    original_nx = generate_graph(G)
+    bfs_dict, bfs_roots = spanning_forest(G, bfs)
+    dfs_dict, dfs_roots = spanning_forest(G, dfs)
+
+    bfs_nx = generate_graph(bfs_dict)
+    dfs_nx = generate_graph(dfs_dict)
+
+    if roots is not None:
+        bfs_roots = [roots] if not isinstance(roots, list) else roots
+        dfs_roots = [roots] if not isinstance(roots, list) else roots
 
     figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
 
-    draw_graph(original_nx, root, layout_type, f'{image_name_prefix}_original_graph', ax=axs[0])
-    draw_graph(bfs_nx, root, layout_type, f'{image_name_prefix}_bfs_tree', ax=axs[1])
-    draw_graph(dfs_nx, root, layout_type, f'{image_name_prefix}_dfs_tree', ax=axs[2])
+    # original can have the roots bfs_roots or dfs_roots as a parameter, since they are the same as the original graph
+    draw_graph(original_nx, bfs_roots, layout_type, f'{image_name_prefix}_original_graph', ax=axs[0])
+    draw_graph(bfs_nx, bfs_roots, layout_type, f'{image_name_prefix}_bfs_tree', ax=axs[1])
+    draw_graph(dfs_nx, dfs_roots, layout_type, f'{image_name_prefix}_dfs_tree', ax=axs[2])
 
     plt.tight_layout()
     figures.savefig(f'images/{image_name_prefix}_comparison.png') # save the figure with all three graphs
@@ -356,24 +397,24 @@ def main():
     generate_comparison(graph_root8, 8, 'root8', 'tree')
 
     print('---------- FOREST ----------')
-    # generate_comparison(graph_forest, 8, 'forest', None)
-    original_nx = generate_graph(graph_forest)
+    # original_nx = generate_graph(graph_forest)
 
-    forest_dict_bfs, bfs_roots = spanning_forest(graph_forest, bfs)
-    bfs_nx = generate_graph(forest_dict_bfs)
+    # forest_dict_bfs, bfs_roots = spanning_forest(graph_forest, bfs)
+    # bfs_nx = generate_graph(forest_dict_bfs)
 
-    forest_dict_dfs, dfs_roots = spanning_forest(graph_forest, dfs)
-    dfs_nx = generate_graph(forest_dict_dfs)
-    # dfs_nx = generate_graph(spanning_forest(graph_forest, dfs, 8))
+    # forest_dict_dfs, dfs_roots = spanning_forest(graph_forest, dfs)
+    # dfs_nx = generate_graph(forest_dict_dfs)
 
-    figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
+    # figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
 
-    draw_graph(original_nx, 8, None, 'forest_original_graph', ax=axs[0])
-    draw_graph(bfs_nx, 8, None, 'forest_bfs_tree', ax=axs[1])
-    draw_graph(dfs_nx, 8, None, 'forest_dfs_tree', ax=axs[2])
+    # draw_graph(original_nx, 8, None, 'forest_original_graph', ax=axs[0])
+    # draw_graph(bfs_nx, bfs_roots, None, 'forest_bfs_tree', ax=axs[1])
+    # draw_graph(dfs_nx, dfs_roots, None, 'forest_dfs_tree', ax=axs[2])
 
-    plt.tight_layout()
-    figures.savefig(f'images/forest_comparison.png') # save the figure with all three graphs
+    generate_comparison(graph_forest, None, 'forest', 'forest')
+
+    # plt.tight_layout()
+    # figures.savefig(f'images/forest_comparison.png') # save the figure with all three graphs
 
     # ---------- PETERSEN GRAPH  ----------
     print('---------- PETERSEN GRAPH ----------')
