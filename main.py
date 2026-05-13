@@ -405,25 +405,54 @@ petersen_original_nx = generate_graph(petersen_graph)
 petersen_bfs_nx = generate_graph(bfs(petersen_graph, 'A'))
 petersen_dfs_nx = generate_graph(dfs(petersen_graph, 'A'))
 
-# save individual graphs
-draw_graph(petersen_original_nx, 'A', 'petersen', 'petersen_original', save=True)
-plt.close() # close the figure to avoid overlap when drawing the next one
+# -- save individual graphs with root A -- #
+# draw_graph(petersen_original_nx, 'A', 'petersen', 'petersen_A_original', save=True)
+# plt.close() # close the figure to avoid overlap when drawing the next one
 
-draw_graph(petersen_bfs_nx, 'A', 'petersen', 'petersen_bfs', save=True)
-plt.close()
+# draw_graph(petersen_bfs_nx, 'A', 'petersen', 'petersen_A_bfs', save=True)
+# plt.close()
 
-draw_graph(petersen_dfs_nx, 'A', 'petersen', 'petersen_dfs', save=True)
-plt.close()
+# draw_graph(petersen_dfs_nx, 'A', 'petersen', 'petersen_A_dfs', save=True)
+# plt.close()
 
 petersen_figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
 
-draw_graph(petersen_original_nx, 'A', layout_type='petersen', image_name='petersen_original_graph', ax=axs[0])
-draw_graph(petersen_bfs_nx, 'A', layout_type='petersen', image_name='petersen_bfs_tree', ax=axs[1])
-draw_graph(petersen_dfs_nx, 'A', layout_type='petersen', image_name='petersen_dfs_tree', ax=axs[2])
+draw_graph(petersen_original_nx, 'A', 'petersen', 'petersen_A_original_graph', ax=axs[0])
+draw_graph(petersen_bfs_nx, 'A', 'petersen', 'petersen_A_bfs_tree', ax=axs[1])
+draw_graph(petersen_dfs_nx, 'A', 'petersen', 'petersen_A_dfs_tree', ax=axs[2])
 
 plt.tight_layout()
-petersen_figures.savefig('images/petersen_comparison.png') # save the figure with all three graphs
+petersen_figures.savefig('images/petersen_A_comparison.png') # save the figure with all three graphs
 plt.show()
+
+### -- save individual graphs with root A1 -- ###
+petersen_original_nx = generate_graph(petersen_graph)
+petersen_bfs_nx = generate_graph(bfs(petersen_graph, 'A1'))
+petersen_dfs_nx = generate_graph(dfs(petersen_graph, 'A1'))
+# draw_graph(petersen_original_nx, 'A1', 'petersen', 'petersen_A1_original', save=True)
+# plt.close() # close the figure to avoid overlap when drawing the next one
+
+# draw_graph(petersen_bfs_nx, 'A1', 'petersen', 'petersen_A1_bfs', save=True)
+# plt.close()
+
+# draw_graph(petersen_dfs_nx, 'A1', 'petersen', 'petersen_A1_dfs', save=True)
+# plt.close()
+
+petersen_figures, axs = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True) # figures share the same scale (x,y)
+
+draw_graph(petersen_original_nx, 'A1', 'petersen', 'petersen_A1_original_graph', ax=axs[0])
+draw_graph(petersen_bfs_nx, 'A1', 'petersen', 'petersen_A1_bfs_tree', ax=axs[1])
+draw_graph(petersen_dfs_nx, 'A1', 'petersen', 'petersen_A1_dfs_tree', ax=axs[2])
+
+plt.tight_layout()
+petersen_figures.savefig('images/petersen_A1_comparison.png') # save the figure with all three graphs
+plt.show()
+
+# ----- COMPLETE GRAPH -----
+complete_original_nx = nx.complete_graph(10) # complete graph with 10 nodes
+complete_bfs_nx = generate_graph(bfs(nx.complete_graph(10), 0))
+complete_dfs_nx = generate_graph(dfs(nx.complete_graph(10), 0))
+
 
 
 plt.close()
